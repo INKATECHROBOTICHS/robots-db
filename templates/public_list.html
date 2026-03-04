@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Catálogo de Robots</title>
+</head>
+
+<body>
+
+<h1>Catálogo de Robots</h1>
+
+<ul>
+{% for r in robots %}
+<li>
+<a href="/robot/{{r.id}}">
+{{r.nombre}} ({{r.modelo}})
+</a>
+ - Precio: {{r.precio}}
+</li>
+{% endfor %}
+</ul>
+
+</body>
+</html>
