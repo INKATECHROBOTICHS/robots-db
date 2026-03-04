@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{{robot.nombre}}</title>
+</head>
+
+<body>
+
+<a href="/">← Volver</a>
+
+<h1>{{robot.nombre}}</h1>
+
+<p><b>Modelo:</b> {{robot.modelo}}</p>
+<p><b>Fabricante:</b> {{robot.fabricante}}</p>
+<p><b>Precio:</b> {{robot.precio}}</p>
+
+<p><b>Descripción:</b></p>
+<p>{{robot.descripcion}}</p>
+
+{% if robot.imagen %}
+<img src="/uploads/{{robot.imagen}}" width="400">
+{% endif %}
+
+</body>
+</html>
