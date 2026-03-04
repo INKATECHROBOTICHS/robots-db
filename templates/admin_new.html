@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Crear Robot</title>
+</head>
+<body>
+
+<h1>Crear Nuevo Robot</h1>
+
+<form action="/admin/new" method="post" enctype="multipart/form-data">
+  <input type="hidden" name="token" value="{{ token }}">
+
+  <p>
+    Nombre:
+    <input name="nombre" required>
+  </p>
+
+  <p>
+    Modelo:
+    <input name="modelo" required>
+  </p>
+
+  <p>
+    Fabricante:
+    <input name="fabricante">
+  </p>
+
+  <p>
+    Precio:
+    <input name="precio" type="number">
+  </p>
+
+  <p>Descripción:</p>
+  <textarea name="descripcion" rows="4" cols="50"></textarea>
+
+  <p>
+    Foto del robot:
+    <input type="file" name="foto">
+  </p>
+
+  <button type="submit">Guardar robot</button>
+</form>
+
+<p>
+  <a href="/admin?token={{ token }}">Volver</a>
+</p>
+
+</body>
+</html>
