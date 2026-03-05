@@ -198,7 +198,7 @@ def admin_create_robot(
         db.add(robot)
         db.commit()
 
-    return RedirectResponse(url="/admin", status_code=303)import os
+   return RedirectResponse(url="/admin", status_code=303)
 import shutil
 from datetime import datetime
 from typing import Optional
@@ -399,3 +399,4 @@ def admin_create_robot(
         db.commit()
 
     return RedirectResponse(url="/admin", status_code=303)
+
