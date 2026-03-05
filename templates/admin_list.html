@@ -1,53 +1,159 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<title>Panel Administrador</title>
+  <meta charset="utf-8">
+  <title>Admin - INKATECH Robotics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root{
+      --bg:#0f1f3d;
+      --card:#162a4f;
+      --yellow:#f5c542;
+      --cyan:#36b5e6;
+      --line:#2c4a7a;
+      --text:#ffffff;
+      --muted:#cbd5e1;
+    }
+
+    body{ margin:0; background:var(--bg); color:var(--text); font-family:Arial, sans-serif; }
+
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 20px;
+      border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,0.18);
+    }
+
+    .brand{ display:flex; align-items:center; gap:12px; }
+    .brand img{ height:44px; width:auto; display:block; }
+    .brand .name{ color:var(--yellow); font-weight:bold; letter-spacing:1px; }
+
+    a{ color:var(--cyan); text-decoration:none; }
+
+    .container{ max-width:1100px; margin:0 auto; padding:22px; }
+
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin:12px 0 18px 0;
+    }
+
+    .btn{
+      display:inline-block;
+      padding:10px 14px;
+      border-radius:12px;
+      border:1px solid var(--cyan);
+      color:var(--cyan);
+      font-weight:bold;
+      background:transparent;
+      cursor:pointer;
+    }
+
+    .btn.primary{
+      background:var(--cyan);
+      color:#062033;
+      border:none;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:16px;
+      box-shadow:0 12px 30px rgba(0,0,0,0.25);
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      overflow:hidden;
+      border-radius:12px;
+    }
+
+    th, td{
+      padding:12px;
+      border-bottom:1px solid var(--line);
+      text-align:left;
+    }
+
+    th{
+      color:var(--yellow);
+      font-size:14px;
+    }
+
+    td{ color:var(--text); }
+
+    .muted{ color:var(--muted); }
+
+    .thumb{
+      height:54px;
+      width:80px;
+      object-fit:cover;
+      border-radius:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,0.03);
+    }
+
+    @media (max-width: 700px){
+      .brand .name{ display:none; }
+      th:nth-child(3), td:nth-child(3){ display:none; } /* ocultar fabricante en móvil */
+    }
+  </style>
 </head>
 
 <body>
 
-<h1>Panel de Administración</h1>
+  <div class="topbar">
+    <div class="brand">
+      <img src="/static/logo.jpg" alt="INKATECH Robotics">
+      <div class="name">INKATECH ROBOTICS</div>
+    </div>
 
-<p>
-<a href="/admin/new?token={{token}}">
-Crear Robot
-</a>
-</p>
+    <div class="actions">
+      <a class="btn" href="/">Página pública</a>
+      <a class="btn" href="/logout">Cerrar sesión</a>
+    </div>
+  </div>
 
-<table border="1">
+  <div class="container">
+    <h1 style="color:var(--yellow);margin:0 0 12px 0;">Panel Admin</h1>
+    <div class="actions">
+      <a class="btn primary" href="/admin/new">+ Crear Robot</a>
+    </div>
 
-<tr>
-<th>ID</th>
-<th>Nombre</th>
-<th>Modelo</th>
-<th>Precio</th>
-<th>Foto</th>
-</tr>
+    <div class="card">
+      <table>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Fabricante</th>
+          <th>Modelo</th>
+          <th>Precio</th>
+          <th>Foto</th>
+        </tr>
 
-{% for r in robots %}
+        {% for r in robots %}
+        <tr>
+          <td class="muted">{{ r.id }}</td>
+          <td><b>{{ r.nombre }}</b></td>
+          <td class="muted">{{ r.fabricante }}</td>
+          <td class="muted">{{ r.modelo }}</td>
+          <td style="color:var(--cyan);font-weight:bold;">$ {{ r.precio }}</td>
+          <td>
+            {% if r.imagen %}
+              <img class="thumb" src="/uploads/{{ r.imagen }}" alt="{{ r.nombre }}">
+            {% else %}
+              <span class="muted">Sin foto</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
 
-<tr>
-<td>{{r.id}}</td>
-<td>{{r.nombre}}</td>
-<td>{{r.modelo}}</td>
-<td>{{r.precio}}</td>
-
-<td>
-{% if r.imagen %}
-<img src="/uploads/{{r.imagen}}" height="60">
-{% endif %}
-</td>
-
-</tr>
-
-{% endfor %}
-
-</table>
-
-<p>
-<a href="/">Ver página pública</a>
-</p>
+  </div>
 
 </body>
 </html>
