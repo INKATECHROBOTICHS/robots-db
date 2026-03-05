@@ -1,25 +1,106 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>{{ robot.nombre }}</title>
+  <title>{{ robot.nombre }} - INKATECH Robotics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root{
+      --bg:#0f1f3d;
+      --card:#162a4f;
+      --yellow:#f5c542;
+      --cyan:#36b5e6;
+      --line:#2c4a7a;
+      --text:#ffffff;
+      --muted:#cbd5e1;
+    }
+
+    body{ margin:0; background:var(--bg); color:var(--text); font-family:Arial, sans-serif; }
+
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 20px;
+      border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,0.18);
+    }
+
+    .brand{ display:flex; align-items:center; gap:12px; }
+    .brand img{ height:42px; width:auto; }
+    .brand .name{ color:var(--yellow); font-weight:bold; letter-spacing:1px; }
+
+    a{ color:var(--cyan); text-decoration:none; }
+
+    .container{ max-width:1000px; margin:0 auto; padding:22px; }
+
+    .grid{ display:grid; grid-template-columns: 1.2fr 0.8fr; gap:18px; }
+    @media (max-width: 850px){ .grid{ grid-template-columns:1fr; } .brand .name{ display:none; } }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:18px;
+      box-shadow:0 12px 30px rgba(0,0,0,0.25);
+    }
+
+    h1{ margin:0 0 8px 0; color:var(--yellow); font-size:30px; }
+    .meta{ color:var(--muted); line-height:1.7; }
+    .price{ margin-top:10px; font-size:22px; color:var(--cyan); font-weight:bold; }
+
+    .desc{ margin-top:14px; white-space:pre-wrap; color:var(--text); line-height:1.7; }
+
+    .robot-img{
+      width:100%;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,0.03);
+      display:block;
+    }
+  </style>
 </head>
+
 <body>
 
-<a href="/">← Volver</a>
+  <!-- Header con logo -->
+  <div class="topbar">
+    <div class="brand">
+      <img src="/static/logo.png" alt="INKATECH Robotics">
+      <div class="name">INKATECH ROBOTICS</div>
+    </div>
+    <div>
+      <a href="/">← Volver al catálogo</a>
+    </div>
+  </div>
 
-<h1>{{ robot.nombre }}</h1>
+  <div class="container">
+    <div class="grid">
 
-<p><b>Modelo:</b> {{ robot.modelo }}</p>
-<p><b>Fabricante:</b> {{ robot.fabricante }}</p>
-<p><b>Precio:</b> {{ robot.precio }}</p>
+      <div class="card">
+        <h1>{{ robot.nombre }}</h1>
 
-<p><b>Descripción:</b></p>
-<p>{{ robot.descripcion }}</p>
+        <div class="meta">
+          <div><b>Modelo:</b> {{ robot.modelo }}</div>
+          <div><b>Fabricante:</b> {{ robot.fabricante }}</div>
+          <div class="price">Precio: $ {{ robot.precio }}</div>
+        </div>
 
-{% if robot.imagen %}
-  <img src="/uploads/{{ robot.imagen }}" width="400">
-{% endif %}
+        <div class="desc">
+          <b style="color:var(--yellow);">Descripción</b><br>
+          {{ robot.descripcion if robot.descripcion else "Sin descripción todavía." }}
+        </div>
+      </div>
+
+      <div class="card">
+        {% if robot.imagen %}
+          <img class="robot-img" src="/uploads/{{ robot.imagen }}" alt="{{ robot.nombre }}">
+        {% else %}
+          <div class="meta">Este robot aún no tiene foto.</div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
 
 </body>
 </html>
