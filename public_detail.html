@@ -1,26 +1,67 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>{{robot.nombre}}</title>
+<title>{{ robot.nombre }}</title>
+
+<style>
+
+body{
+background:#0f1f3d;
+color:white;
+font-family:Arial;
+margin:40px;
+}
+
+h1{
+color:#f5c542;
+}
+
+.card{
+background:#162a4f;
+padding:25px;
+border-radius:10px;
+max-width:800px;
+margin:auto;
+}
+
+a{
+color:#36b5e6;
+text-decoration:none;
+}
+
+img{
+margin-top:20px;
+border-radius:10px;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<a href="/">← Volver</a>
+<div class="card">
 
-<h1>{{robot.nombre}}</h1>
+<a href="/">← Volver al catálogo</a>
 
-<p><b>Modelo:</b> {{robot.modelo}}</p>
-<p><b>Fabricante:</b> {{robot.fabricante}}</p>
-<p><b>Precio:</b> {{robot.precio}}</p>
+<h1>{{ robot.nombre }}</h1>
+
+<p><b>Modelo:</b> {{ robot.modelo }}</p>
+
+<p><b>Fabricante:</b> {{ robot.fabricante }}</p>
+
+<p><b>Precio:</b> ${{ robot.precio }}</p>
 
 <p><b>Descripción:</b></p>
-<p>{{robot.descripcion}}</p>
+
+<p>{{ robot.descripcion }}</p>
 
 {% if robot.imagen %}
-<img src="/uploads/{{robot.imagen}}" width="400">
+<img src="/uploads/{{ robot.imagen }}" width="400">
 {% endif %}
+
+</div>
 
 </body>
 </html>
