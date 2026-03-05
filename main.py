@@ -17,7 +17,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./robots.db")
 UPLOAD_DIR = "./uploads"
 STATIC_DIR = "./static"
 
-ADMIN_PASSWORD = os.getenv("1207135jm")
+ADMIN_PASSWORD = ("1207135jm")
 ADMIN_COOKIE_NAME = "josephsi5"
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -173,3 +173,4 @@ def admin_create_robot(
         db.commit()
 
     return RedirectResponse(url="/admin", status_code=303)
+
