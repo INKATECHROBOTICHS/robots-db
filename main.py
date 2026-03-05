@@ -12,18 +12,24 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+
 # =========================
 # CONFIG
 # =========================
 DATABASE_URL = "sqlite:///./robots.db"
 
 UPLOAD_DIR = "./uploads"   # fotos de robots (subidas desde admin)
-STATIC_DIR = "./static"    # cosas fijas: logo, css, etc.
+STATIC_DIR = "./static"    # logo y archivos fijos
 
-ADMIN_TOKEN = "1207135jm"  # <-- pon tu token aquí (o el que quieras)
+# 🔐 Cambia esta contraseña por la tuya
+ADMIN_PASSWORD = "1207135jm"
+
+# Cookie para “quedarte logueado”
+ADMIN_COOKIE_NAME = "josephsi5"
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
+
 
 # =========================
 # DB (SQLite + SQLAlchemy)
@@ -53,6 +59,7 @@ class RobotDB(Base):
 
 Base.metadata.create_all(bind=engine)
 
+
 # =========================
 # APP + STATIC + TEMPLATES
 # =========================
@@ -75,9 +82,9 @@ def render(template_name: str, **context) -> HTMLResponse:
     return HTMLResponse(template.render(**context))
 
 
-def require_admin(token: str):
-    if token != ADMIN_TOKEN:
-        raise HTTPException(status_code=401, detail="No autorizado (token incorrecto)")
+def require_admin(request: Request):
+    if request.cookies.get(ADMIN_COOKIE_NAME) != "ok":
+        raise HTTPException(status_code=401, detail="No autorizado")
 
 
 # =========================
@@ -102,25 +109,56 @@ def public_detail(robot_id: int):
 
 
 # =========================
+# LOGIN / LOGOUT
+# =========================
+@app.get("/login", response_class=HTMLResponse)
+def login_form():
+    return render("login.html", error=None)
+
+
+@app.post("/login", response_class=HTMLResponse)
+def login(password: str = Form(...)):
+    if password != ADMIN_PASSWORD:
+        return render("login.html", error="Contraseña incorrecta")
+
+    # ✅ Correcto: guardamos cookie y mandamos al admin
+    resp = RedirectResponse(url="/admin", status_code=303)
+    resp.set_cookie(
+        key=ADMIN_COOKIE_NAME,
+        value="ok",
+        httponly=True,
+        samesite="lax",
+    )
+    return resp
+
+
+@app.get("/logout")
+def logout():
+    resp = RedirectResponse(url="/", status_code=303)
+    resp.delete_cookie(ADMIN_COOKIE_NAME)
+    return resp
+
+
+# =========================
 # ADMIN PAGES
 # =========================
 @app.get("/admin", response_class=HTMLResponse)
-def admin_list(token: str = ""):
-    require_admin(token)
+def admin_list(request: Request):
+    require_admin(request)
     with SessionLocal() as db:
         robots = db.query(RobotDB).order_by(RobotDB.id.desc()).all()
-    return render("admin_list.html", robots=robots, token=token)
+    return render("admin_list.html", robots=robots)
 
 
 @app.get("/admin/new", response_class=HTMLResponse)
-def admin_new_form(token: str = ""):
-    require_admin(token)
-    return render("admin_new.html", token=token)
+def admin_new_form(request: Request):
+    require_admin(request)
+    return render("admin_new.html")
 
 
 @app.post("/admin/new")
 def admin_create_robot(
-    token: str = Form(...),
+    request: Request,
     nombre: str = Form(...),
     modelo: str = Form(...),
     fabricante: Optional[str] = Form(None),
@@ -128,12 +166,11 @@ def admin_create_robot(
     descripcion: Optional[str] = Form(None),
     foto: Optional[UploadFile] = File(None),
 ):
-    require_admin(token)
+    require_admin(request)
 
     filename = None
     if foto and foto.filename:
         ext = os.path.splitext(foto.filename)[1].lower()
-        # nombre único
         filename = f"robot_{int(datetime.utcnow().timestamp())}{ext}"
         path = os.path.join(UPLOAD_DIR, filename)
         with open(path, "wb") as f:
@@ -153,5 +190,4 @@ def admin_create_robot(
         db.add(robot)
         db.commit()
 
-    return RedirectResponse(url=f"/admin?token={token}", status_code=303)
-
+    return RedirectResponse(url="/admin", status_code=303)
