@@ -6,72 +6,55 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-
 from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Text
 from sqlalchemy.orm import declarative_base, sessionmaker
-
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-
 
 # =========================
 # CONFIG
 # =========================
-# ✅ En Railway (PostgreSQL) esto viene como variable de entorno DATABASE_URL
-# ✅ En tu PC, si no existe, usa SQLite local
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./robots.db")
+UPLOAD_DIR = "./uploads"
+STATIC_DIR = "./static"
 
-UPLOAD_DIR = "./uploads"   # fotos de robots
-STATIC_DIR = "./static"    # logo y archivos fijos
-
-# 🔐 Cambia esta contraseña por la tuya (para entrar al admin)
 ADMIN_PASSWORD = os.getenv("1207135jm")
 ADMIN_COOKIE_NAME = "josephsi5"
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
 
-
 # =========================
 # DB (SQLAlchemy)
 # =========================
 def make_engine(db_url: str):
-    # Railway a veces da URLs que empiezan con postgres://
-    # SQLAlchemy prefiere postgresql://
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-    # SQLite necesita connect_args especial
     if db_url.startswith("sqlite"):
         return create_engine(db_url, connect_args={"check_same_thread": False})
-    else:
-        return create_engine(db_url)
 
+    return create_engine(db_url)
 
 engine = make_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
-
 class RobotDB(Base):
     __tablename__ = "robots"
 
     id = Column(Integer, primary_key=True, index=True)
-
     nombre = Column(String(100), nullable=False, index=True)
     modelo = Column(String(100), nullable=False, index=True)
     fabricante = Column(String(100), nullable=True)
 
     precio = Column(Float, nullable=False, default=0.0)
     descripcion = Column(Text, nullable=True)
-
-    imagen = Column(String(300), nullable=True)  # nombre del archivo en uploads/
+    imagen = Column(String(300), nullable=True)
 
     creado_en = Column(DateTime, nullable=False, default=datetime.utcnow)
     actualizado_en = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-
 Base.metadata.create_all(bind=engine)
-
 
 # =========================
 # APP + STATIC + TEMPLATES
@@ -90,7 +73,6 @@ def render(template_name: str, **context) -> HTMLResponse:
     template = env.get_template(template_name)
     return HTMLResponse(template.render(**context))
 
-
 # =========================
 # AUTH (LOGIN)
 # =========================
@@ -98,11 +80,9 @@ def require_admin(request: Request):
     if request.cookies.get(ADMIN_COOKIE_NAME) != "ok":
         raise HTTPException(status_code=401, detail="No autorizado")
 
-
 @app.get("/login", response_class=HTMLResponse)
 def login_form():
     return render("login.html", error=None)
-
 
 @app.post("/login", response_class=HTMLResponse)
 def login(password: str = Form(...)):
@@ -118,23 +98,20 @@ def login(password: str = Form(...)):
     )
     return resp
 
-
 @app.get("/logout")
 def logout():
     resp = RedirectResponse(url="/", status_code=303)
     resp.delete_cookie(ADMIN_COOKIE_NAME)
     return resp
 
-
 # =========================
-# PUBLIC PAGES
+# PUBLIC
 # =========================
 @app.get("/", response_class=HTMLResponse)
 def public_list():
     with SessionLocal() as db:
         robots = db.query(RobotDB).order_by(RobotDB.id.desc()).all()
     return render("public_list.html", robots=robots)
-
 
 @app.get("/robot/{robot_id}", response_class=HTMLResponse)
 def public_detail(robot_id: int):
@@ -146,209 +123,8 @@ def public_detail(robot_id: int):
 
     return render("public_detail.html", robot=robot)
 
-
 # =========================
-# ADMIN PAGES
-# =========================
-@app.get("/admin", response_class=HTMLResponse)
-def admin_list(request: Request):
-    require_admin(request)
-    with SessionLocal() as db:
-        robots = db.query(RobotDB).order_by(RobotDB.id.desc()).all()
-    return render("admin_list.html", robots=robots)
-
-
-@app.get("/admin/new", response_class=HTMLResponse)
-def admin_new_form(request: Request):
-    require_admin(request)
-    return render("admin_new.html")
-
-
-@app.post("/admin/new")
-def admin_create_robot(
-    request: Request,
-    nombre: str = Form(...),
-    modelo: str = Form(...),
-    fabricante: Optional[str] = Form(None),
-    precio: float = Form(0.0),
-    descripcion: Optional[str] = Form(None),
-    foto: Optional[UploadFile] = File(None),
-):
-    require_admin(request)
-
-    filename = None
-    if foto and foto.filename:
-        ext = os.path.splitext(foto.filename)[1].lower()
-        filename = f"robot_{int(datetime.utcnow().timestamp())}{ext}"
-        path = os.path.join(UPLOAD_DIR, filename)
-        with open(path, "wb") as f:
-            shutil.copyfileobj(foto.file, f)
-
-    with SessionLocal() as db:
-        robot = RobotDB(
-            nombre=nombre,
-            modelo=modelo,
-            fabricante=fabricante,
-            precio=precio,
-            descripcion=descripcion,
-            imagen=filename,
-            creado_en=datetime.utcnow(),
-            actualizado_en=datetime.utcnow(),
-        )
-        db.add(robot)
-        db.commit()
-
-   return RedirectResponse(url="/admin", status_code=303)
-import shutil
-from datetime import datetime
-from typing import Optional
-
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.staticfiles import StaticFiles
-
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Text
-from sqlalchemy.orm import declarative_base, sessionmaker
-
-from jinja2 import Environment, FileSystemLoader, select_autoescape
-
-
-# =========================
-# CONFIG
-# =========================
-# ✅ En Railway (PostgreSQL) esto viene como variable de entorno DATABASE_URL
-# ✅ En tu PC, si no existe, usa SQLite local
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./robots.db")
-
-UPLOAD_DIR = "./uploads"   # fotos de robots
-STATIC_DIR = "./static"    # logo y archivos fijos
-
-# 🔐 Cambia esta contraseña por la tuya (para entrar al admin)
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "MiClaveSuper123")
-ADMIN_COOKIE_NAME = "inkatech_admin"
-
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-os.makedirs(STATIC_DIR, exist_ok=True)
-
-
-# =========================
-# DB (SQLAlchemy)
-# =========================
-def make_engine(db_url: str):
-    # Railway a veces da URLs que empiezan con postgres://
-    # SQLAlchemy prefiere postgresql://
-    if db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
-
-    # SQLite necesita connect_args especial
-    if db_url.startswith("sqlite"):
-        return create_engine(db_url, connect_args={"check_same_thread": False})
-    else:
-        return create_engine(db_url)
-
-
-engine = make_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-Base = declarative_base()
-
-
-class RobotDB(Base):
-    __tablename__ = "robots"
-
-    id = Column(Integer, primary_key=True, index=True)
-
-    nombre = Column(String(100), nullable=False, index=True)
-    modelo = Column(String(100), nullable=False, index=True)
-    fabricante = Column(String(100), nullable=True)
-
-    precio = Column(Float, nullable=False, default=0.0)
-    descripcion = Column(Text, nullable=True)
-
-    imagen = Column(String(300), nullable=True)  # nombre del archivo en uploads/
-
-    creado_en = Column(DateTime, nullable=False, default=datetime.utcnow)
-    actualizado_en = Column(DateTime, nullable=False, default=datetime.utcnow)
-
-
-Base.metadata.create_all(bind=engine)
-
-
-# =========================
-# APP + STATIC + TEMPLATES
-# =========================
-app = FastAPI(title="INKATECH Robotics")
-
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
-env = Environment(
-    loader=FileSystemLoader("templates"),
-    autoescape=select_autoescape(["html", "xml"]),
-)
-
-def render(template_name: str, **context) -> HTMLResponse:
-    template = env.get_template(template_name)
-    return HTMLResponse(template.render(**context))
-
-
-# =========================
-# AUTH (LOGIN)
-# =========================
-def require_admin(request: Request):
-    if request.cookies.get(ADMIN_COOKIE_NAME) != "ok":
-        raise HTTPException(status_code=401, detail="No autorizado")
-
-
-@app.get("/login", response_class=HTMLResponse)
-def login_form():
-    return render("login.html", error=None)
-
-
-@app.post("/login", response_class=HTMLResponse)
-def login(password: str = Form(...)):
-    if password != ADMIN_PASSWORD:
-        return render("login.html", error="Contraseña incorrecta")
-
-    resp = RedirectResponse(url="/admin", status_code=303)
-    resp.set_cookie(
-        key=ADMIN_COOKIE_NAME,
-        value="ok",
-        httponly=True,
-        samesite="lax",
-    )
-    return resp
-
-
-@app.get("/logout")
-def logout():
-    resp = RedirectResponse(url="/", status_code=303)
-    resp.delete_cookie(ADMIN_COOKIE_NAME)
-    return resp
-
-
-# =========================
-# PUBLIC PAGES
-# =========================
-@app.get("/", response_class=HTMLResponse)
-def public_list():
-    with SessionLocal() as db:
-        robots = db.query(RobotDB).order_by(RobotDB.id.desc()).all()
-    return render("public_list.html", robots=robots)
-
-
-@app.get("/robot/{robot_id}", response_class=HTMLResponse)
-def public_detail(robot_id: int):
-    with SessionLocal() as db:
-        robot = db.query(RobotDB).filter(RobotDB.id == robot_id).first()
-
-    if not robot:
-        raise HTTPException(status_code=404, detail="Robot no encontrado")
-
-    return render("public_detail.html", robot=robot)
-
-
-# =========================
-# ADMIN PAGES
+# ADMIN
 # =========================
 @app.get("/admin", response_class=HTMLResponse)
 def admin_list(request: Request):
@@ -357,12 +133,10 @@ def admin_list(request: Request):
         robots = db.query(RobotDB).order_by(RobotDB.id.desc()).all()
     return render("admin_list.html", robots=robots)
 
-
 @app.get("/admin/new", response_class=HTMLResponse)
 def admin_new_form(request: Request):
     require_admin(request)
     return render("admin_new.html")
-
 
 @app.post("/admin/new")
 def admin_create_robot(
@@ -399,4 +173,3 @@ def admin_create_robot(
         db.commit()
 
     return RedirectResponse(url="/admin", status_code=303)
-
